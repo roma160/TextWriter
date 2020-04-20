@@ -1,0 +1,15 @@
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\bin\Debug\TextWriter.exe.config
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\bin\Debug\TextWriter.exe
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\bin\Debug\TextWriter.pdb
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.csprojAssemblyReference.cache
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\MainWindow.g.cs
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\App.g.cs
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter_MarkupCompile.cache
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter_MarkupCompile.lref
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\MainWindow.baml
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.g.resources
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.Properties.Resources.resources
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.csproj.GenerateResource.cache
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.csproj.CoreCompileInputs.cache
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.exe
+D:\progects\visual studio\TextWriter\TextWriter\TextWriter\obj\Debug\TextWriter.pdb

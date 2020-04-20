@@ -1,0 +1,34 @@
+﻿<Window x:Class="TextWriter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TextWriter"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="542" Width="809" MinWidth="500" MinHeight="500">
+    <Grid x:Name="grid">
+        <ToolBarPanel Height="30" VerticalAlignment="Top" Panel.ZIndex="1" Orientation="Horizontal">
+            <Button x:Name="OpenImage" Content="Open image" HorizontalAlignment="Left" Width="160" Height="30" Click="Button_Click"/>
+            <Separator/>
+            <Button Width="130" Content="Debug button" Click="Button_Click_1"/>
+        </ToolBarPanel>
+        <Label HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" FontSize="24">
+            <AccessText TextWrapping="WrapWithOverflow" TextAlignment="Center" Foreground="#FF646464">
+                To start working open image with all alphabet and characters are writed on pure background.
+            </AccessText>
+        </Label>
+        <ScrollViewer x:Name="Scroller" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" 
+                      Width="{Binding ActualWidth, ElementName=grid, Mode=OneWay}" 
+                      Height="{Binding ActualHeight, ElementName=grid, Mode=OneWay}" 
+                      CanContentScroll="True" VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="Scroller_MouseWheel">
+            <Image x:Name="Preview" Stretch="None" MouseDown="Preview_MouseDown">
+                <Image.LayoutTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="PreviewScale" ScaleX="1" ScaleY="1"/>
+                    </TransformGroup>
+                </Image.LayoutTransform>
+            </Image>
+        </ScrollViewer>
+    </Grid>
+</Window>
