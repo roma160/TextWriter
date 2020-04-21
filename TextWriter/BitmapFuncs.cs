@@ -14,7 +14,7 @@ namespace TextWriter
         {
             Bitmap ret = new Bitmap(bitmap);
             return ret.Clone(cropArea, 
-                System.Drawing.Imaging.PixelFormat.Format64bppPArgb);
+                System.Drawing.Imaging.PixelFormat.Format16bppArgb1555);
         }
         public static Bitmap cropBitmap(Bitmap bitmap, Point begin, Point end)
         {

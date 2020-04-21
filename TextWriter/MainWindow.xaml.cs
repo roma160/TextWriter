@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Microsoft.Win32;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -14,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
+using System.Windows.Forms;
 
 namespace TextWriter
 {
@@ -36,6 +36,7 @@ namespace TextWriter
         public static float PointPreviewScale = 10f;
 
         const String NeededChars = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ.-!?:,«»";
+        const String Words = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ";
         List<Character> Characters;
         int selectedSampleIndex = -1;
         int selectedCharIndex = -1;
@@ -61,7 +62,7 @@ namespace TextWriter
         {
             open.Title = "Open image:";
             open.Filter = "Image files|*.bmp;*.jpg;*.gif;*.png;*.tif";
-            if(open.ShowDialog() == true)
+            if(open.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
                 bitmap = (Bitmap)Image.FromFile(open.FileName);
                 buffBitmap = (Bitmap)bitmap.Clone();
@@ -103,16 +104,78 @@ namespace TextWriter
             System.Windows.Point pos = convertToPixels(e.GetPosition(Preview));
             int x = (int)pos.X;
             int y = (int)pos.Y;
+            CharacterSample sample = Characters[selectedCharIndex].Samples[selectedSampleIndex];
+            System.Drawing.Point point = new System.Drawing.Point(x, y);
+            System.Drawing.Point startPoint = new System.Drawing.Point(sample.bitmapLoc.X,
+                sample.bitmapLoc.Y + sample.Img.Height);
+            System.Drawing.Point finishPoint = new System.Drawing.Point(sample.bitmapLoc.X +
+                sample.Img.Width, sample.bitmapLoc.Y);
+            System.Drawing.Point beginPoint = new System.Drawing.Point(
+                sample.Begin.X + sample.bitmapLoc.X, sample.Begin.Y + sample.bitmapLoc.Y);
+            System.Drawing.Point endPoint = new System.Drawing.Point(
+                sample.End.X + sample.bitmapLoc.X, sample.End.Y + sample.bitmapLoc.Y);
 
-            CharacterSample nowSample = Characters[selectedCharIndex].Samples[selectedSampleIndex];
-            if (checkIfInCircle(nowSample.Begin, new System.Drawing.Point(x, y)))
-                MessageBox.Show("Hello");
+            if(action == NowAction.WaitingForAction)
+            {
+                if (checkIfInCircle(startPoint, point))
+                    action = NowAction.SettingStartPoint;
+                else if (checkIfInCircle(finishPoint, point))
+                    action = NowAction.SettingFinishPoint;
+                else if (checkIfInCircle(beginPoint, point))
+                    action = NowAction.SettingBeginPoint;
+                else if (checkIfInCircle(endPoint, point))
+                    action = NowAction.SettingEndPoint;
+            }
+            else if(action == NowAction.SettingStartPoint)
+            {
+                int X = Math.Min(x, finishPoint.X);
+                int Y = Math.Min(y, finishPoint.Y);
+                int W = Math.Abs(finishPoint.X - x);
+                int H = Math.Abs(y - finishPoint.Y);
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].Img =
+                    BitmapFuncs.cropBitmap(buffBitmap, new System.Drawing.Rectangle(X, Y, W, H));
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].bitmapLoc =
+                    new System.Drawing.Point(X, Y);
+                showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
+                action = NowAction.WaitingForAction;
+            }
+            else if (action == NowAction.SettingFinishPoint)
+            {
+                int X = Math.Min(x, startPoint.X);
+                int Y = Math.Min(y, startPoint.Y);
+                int W = Math.Abs(startPoint.X - x);
+                int H = Math.Abs(y - startPoint.Y);
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].Img =
+                    BitmapFuncs.cropBitmap(buffBitmap, new System.Drawing.Rectangle(X, Y, W, H));
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].bitmapLoc =
+                    new System.Drawing.Point(X, Y);
+                showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
+                action = NowAction.WaitingForAction;
+            }
+            else if(action == NowAction.SettingEndPoint)
+            {
+                endPoint = new System.Drawing.Point(
+                    x - sample.bitmapLoc.X, y - sample.bitmapLoc.Y);
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].End =
+                    endPoint;
+                showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
+                action = NowAction.WaitingForAction;
+            }
+            else if (action == NowAction.SettingBeginPoint)
+            {
+                beginPoint = new System.Drawing.Point(
+                    x - sample.bitmapLoc.X, y - sample.bitmapLoc.Y);
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].Begin =
+                    beginPoint;
+                showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
+                action = NowAction.WaitingForAction;
+            }
         }
 
         private void add_character_button_Click(object sender, RoutedEventArgs e)
         {
             int res = checkIfAllCharactersAdded();
-            if (res == -1) MessageBox.Show("You have added all characters");
+            if (res == -1) System.Windows.MessageBox.Show("You have added all characters");
             else if (buffBitmap != null)
             {
                 Character newC = new Character(NeededChars[res]);
@@ -128,7 +191,7 @@ namespace TextWriter
                 updateLists();
             }
             else
-                MessageBox.Show("Firstly open image.", "Error", 
+                System.Windows.MessageBox.Show("Firstly open image.", "Error", 
                     MessageBoxButton.OK, MessageBoxImage.Error);
         }
         void updateLists()
@@ -161,16 +224,18 @@ namespace TextWriter
                 sample.bitmapLoc.Y + sample.Img.Height);
             System.Drawing.Point finishPoint = new System.Drawing.Point(sample.bitmapLoc.X +
                 sample.Img.Width, sample.bitmapLoc.Y);
-            System.Drawing.Point beginPoint = sample.Begin;
-            System.Drawing.Point endPoint = sample.End;
+            System.Drawing.Point beginPoint = new System.Drawing.Point(
+                sample.Begin.X + sample.bitmapLoc.X, sample.Begin.Y + sample.bitmapLoc.Y);
+            System.Drawing.Point endPoint = new System.Drawing.Point(
+                sample.End.X + sample.bitmapLoc.X, sample.End.Y + sample.bitmapLoc.Y);
 
             bitmap = (Bitmap)buffBitmap.Clone();
             graphics = Graphics.FromImage(bitmap);
-            drawPointControl(startPoint, System.Drawing.Color.White);
-            drawPointControl(finishPoint, System.Drawing.Color.White);
+            drawPointControl(startPoint, System.Drawing.Color.Black);
+            drawPointControl(finishPoint, System.Drawing.Color.Black);
             drawPointControl(beginPoint, System.Drawing.Color.Green);
             drawPointControl(endPoint, System.Drawing.Color.Red);
-            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.White, 
+            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.Black, 
                 1f / (float)PreviewScale.ScaleX);
             graphics.DrawLine(pen, startPoint.X, finishPoint.Y, finishPoint.X, finishPoint.Y);
             graphics.DrawLine(pen, finishPoint.X, finishPoint.Y, finishPoint.X, startPoint.Y);
@@ -207,6 +272,33 @@ namespace TextWriter
                 variants_listbox.Items.Clear();
                 for (int i = 0; i < selected.Samples.Count; i++)
                     variants_listbox.Items.Add(i);
+                CharacterPreview.Content = selected.Symbol;
+            }
+        }
+
+        private void SaveCharactersButton_Click(object sender, RoutedEventArgs e)
+        {
+            using(FolderBrowserDialog dialog = new FolderBrowserDialog())
+            {
+                dialog.Description = "Select empty folder for saving";
+                if(dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    if (Directory.GetFiles(dialog.SelectedPath).Length > 0)
+                        System.Windows.MessageBox.Show("Select empty folder!!!");
+                    else
+                    {
+                        buffBitmap.Save(dialog.SelectedPath + "\\preview.png",
+                            System.Drawing.Imaging.ImageFormat.Png);
+                        StreamWriter writer = new StreamWriter(dialog.SelectedPath + "\\chars.txt");
+                        foreach (Character character in Characters)
+                        {
+                            character.Save(dialog.SelectedPath);
+                            writer.Write(character.Symbol);
+                        }
+                        writer.Close();
+                        System.Windows.MessageBox.Show("Saved succesfuly.");
+                    }
+                }
             }
         }
     }
