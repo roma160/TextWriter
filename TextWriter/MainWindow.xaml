@@ -5,23 +5,60 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TextWriter"
         mc:Ignorable="d"
-        Title="MainWindow" Height="542" Width="809" MinWidth="500" MinHeight="500">
+        Title="MainWindow" Height="542" Width="809" MinWidth="700" MinHeight="500">
     <Grid x:Name="grid">
-        <ToolBarPanel Height="30" VerticalAlignment="Top" Panel.ZIndex="1" Orientation="Horizontal">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="640*"/>
+            <ColumnDefinition Width="5"/>
+            <ColumnDefinition Width="161*" MaxWidth="500" MinWidth="160"/>
+        </Grid.ColumnDefinitions>
+
+        <ToolBarPanel Height="30" VerticalAlignment="Top" Panel.ZIndex="100" Orientation="Horizontal" Grid.ColumnSpan="3">
             <Button x:Name="OpenImage" Content="Open image" HorizontalAlignment="Left" Width="160" Height="30" Click="Button_Click"/>
-            <Separator/>
-            <Button Width="130" Content="Debug button" Click="Button_Click_1"/>
+            <Separator Width="5"/>
+            <Button x:Name="StartButton" Content="Start" Width="115"/>
+            <Separator Width="5"/>
+            <Button x:Name="SaveCharactersButton" Content="Save characters" Width="115"/>
+            <Separator Width="5"/>
+            <Button Width="130" Content="Open characters"/>
         </ToolBarPanel>
-        <Label HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" FontSize="24">
+
+        <Label HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" Grid.Column="0">
             <AccessText TextWrapping="WrapWithOverflow" TextAlignment="Center" Foreground="#FF646464">
                 To start working open image with all alphabet and characters are writed on pure background.
             </AccessText>
         </Label>
-        <ScrollViewer x:Name="Scroller" HorizontalAlignment="Left" Margin="0" VerticalAlignment="Top" 
-                      Width="{Binding ActualWidth, ElementName=grid, Mode=OneWay}" 
+        <ScrollViewer Grid.Column="2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="150" MinHeight="150"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="184" MinHeight="184"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Label Content="Characters :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
+                       Grid.Row="0"/>
+                <ListBox x:Name="characters_listbox" Margin="10,44,10,50" Grid.Row="0" SelectionChanged="characters_listbox_SelectionChanged"/>
+                <Button x:Name="add_character_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add character" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF464646"
+                        Grid.Row="0" Click="add_character_button_Click"/>
+                <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"/>
+                <Label x:Name="CharacterPreview" Content="Variants :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF0A0A0A" FontSize="20"
+                       Grid.Row="2" HorizontalAlignment="Center"/>
+                <Label Content="Variants :" VerticalAlignment="Top" Margin="10,37,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
+                       Grid.Row="2"/>
+                <ListBox x:Name="variants_listbox" Margin="10,74,10,50" Grid.Row="2" SelectionChanged="variants_listbox_SelectionChanged"/>
+                <Button x:Name="add_variant_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add variant" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF464646"
+                        Grid.Row="2"/>
+                <GridSplitter Grid.Row="3" Height="5" HorizontalAlignment="Stretch"/>
+            </Grid>
+        </ScrollViewer>
+        <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+        <ScrollViewer x:Name="Scroller" VerticalAlignment="Top" 
                       Height="{Binding ActualHeight, ElementName=grid, Mode=OneWay}" 
                       CanContentScroll="True" VerticalScrollBarVisibility="Auto" 
-                      HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="Scroller_MouseWheel">
+                      HorizontalScrollBarVisibility="Auto" PreviewMouseWheel="Scroller_MouseWheel"
+                      Grid.Column="0">
             <Image x:Name="Preview" Stretch="None" MouseDown="Preview_MouseDown">
                 <Image.LayoutTransform>
                     <TransformGroup>
