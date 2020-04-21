@@ -24,9 +24,23 @@ namespace TextWriter
         Graphics graphics;
         OpenFileDialog open = new OpenFileDialog();
         double scaleFactor = 300.0;
+        enum NowAction
+        {
+            WaitingForAction = 0,
+            SettingStartPoint = 1,
+            SettingFinishPoint = 2,
+            SettingBeginPoint = 3,
+            SettingEndPoint = 4,
+            ClearingBack = 5
+        }
+        public static float PointPreviewScale = 10f;
 
         const String NeededChars = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ.-!?:,«»";
         List<Character> Characters;
+        int selectedSampleIndex = -1;
+        int selectedCharIndex = -1;
+        NowAction action = NowAction.WaitingForAction;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -38,15 +52,9 @@ namespace TextWriter
                 return Characters.Count;
             else return -1;
         }
-        BitmapSource fromBitmap(Bitmap bitmap)
-        {
-            return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
-                    bitmap.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty,
-                    BitmapSizeOptions.FromWidthAndHeight(bitmap.Width, bitmap.Height));
-        }
         void onBitmapChanged()
         {
-            Preview.Source = fromBitmap(bitmap);
+            Preview.Source = BitmapFuncs.fromBitmap(bitmap);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -56,11 +64,9 @@ namespace TextWriter
             if(open.ShowDialog() == true)
             {
                 bitmap = (Bitmap)Image.FromFile(open.FileName);
-                buffBitmap = bitmap;
+                buffBitmap = (Bitmap)bitmap.Clone();
                 onBitmapChanged();
                 graphics = Graphics.FromImage(bitmap);
-
-                
             }
         }
 
@@ -76,6 +82,8 @@ namespace TextWriter
                 double k = Math.Pow(2, (double)e.Delta / scaleFactor);
                 PreviewScale.ScaleX *= k;
                 PreviewScale.ScaleY *= k;
+                if(selectedSampleIndex != -1 && selectedCharIndex != -1)
+                    showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
                 e.Handled = true;
             }
         }
@@ -96,8 +104,9 @@ namespace TextWriter
             int x = (int)pos.X;
             int y = (int)pos.Y;
 
-            graphics.FillEllipse(System.Drawing.Brushes.White, x, y, 50, 50);
-            onBitmapChanged();
+            CharacterSample nowSample = Characters[selectedCharIndex].Samples[selectedSampleIndex];
+            if (checkIfInCircle(nowSample.Begin, new System.Drawing.Point(x, y)))
+                MessageBox.Show("Hello");
         }
 
         private void add_character_button_Click(object sender, RoutedEventArgs e)
@@ -107,8 +116,14 @@ namespace TextWriter
             else if (buffBitmap != null)
             {
                 Character newC = new Character(NeededChars[res]);
-                newC.AddSample(new CharacterSample(null,
-                    new System.Drawing.Point(0, 0), new System.Drawing.Point(0, 0)));
+
+                System.Drawing.Point startPoint = new System.Drawing.Point(0, 0);
+                System.Drawing.Point finishPoint = new System.Drawing.Point(100, 100);
+                System.Drawing.Point beginPoint = new System.Drawing.Point(25, 25);
+                System.Drawing.Point endPoint = new System.Drawing.Point(50, 50);
+                newC.AddSample(new CharacterSample(BitmapFuncs.cropBitmap(buffBitmap, startPoint, finishPoint),
+                    beginPoint, endPoint));
+                newC.Samples[0].bitmapLoc = new System.Drawing.Point(0, 0);
                 Characters.Add(newC);
                 updateLists();
             }
@@ -131,7 +146,57 @@ namespace TextWriter
 
         private void variants_listbox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            if(variants_listbox.Items.Count > 0)
+            {
+                Character selectedChar = Characters[characters_listbox.SelectedIndex];
+                CharacterSample sample = selectedChar.Samples[variants_listbox.SelectedIndex];
+                selectedCharIndex = characters_listbox.SelectedIndex;
+                selectedSampleIndex = variants_listbox.SelectedIndex;
+                showControls(sample);
+            }
+        }
+        void showControls(CharacterSample sample)
+        {
+            System.Drawing.Point startPoint = new System.Drawing.Point(sample.bitmapLoc.X,
+                sample.bitmapLoc.Y + sample.Img.Height);
+            System.Drawing.Point finishPoint = new System.Drawing.Point(sample.bitmapLoc.X +
+                sample.Img.Width, sample.bitmapLoc.Y);
+            System.Drawing.Point beginPoint = sample.Begin;
+            System.Drawing.Point endPoint = sample.End;
 
+            bitmap = (Bitmap)buffBitmap.Clone();
+            graphics = Graphics.FromImage(bitmap);
+            drawPointControl(startPoint, System.Drawing.Color.White);
+            drawPointControl(finishPoint, System.Drawing.Color.White);
+            drawPointControl(beginPoint, System.Drawing.Color.Green);
+            drawPointControl(endPoint, System.Drawing.Color.Red);
+            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.White, 
+                1f / (float)PreviewScale.ScaleX);
+            graphics.DrawLine(pen, startPoint.X, finishPoint.Y, finishPoint.X, finishPoint.Y);
+            graphics.DrawLine(pen, finishPoint.X, finishPoint.Y, finishPoint.X, startPoint.Y);
+            graphics.DrawLine(pen, finishPoint.X, startPoint.Y, startPoint.X, startPoint.Y);
+            graphics.DrawLine(pen, startPoint.X, startPoint.Y, startPoint.X, finishPoint.Y);
+            onBitmapChanged();
+
+            SymbolPreview.Source = BitmapFuncs.fromBitmap(sample.Img); 
+        }
+        void drawPointControl(System.Drawing.Point point, System.Drawing.Color color)
+        {
+            float a = PointPreviewScale / (float)PreviewScale.ScaleX;
+            float x = point.X;
+            float y = point.Y;
+            System.Drawing.Pen pen = new System.Drawing.Pen(color, a/10f);
+            System.Drawing.Brush brush = new SolidBrush(color);
+            graphics.DrawLine(pen, x - a, y, x + a, y);
+            graphics.DrawLine(pen, x, y - a, x, y + a);
+            graphics.FillEllipse(brush, x, y, 1.5f * a, 1.5f * a);
+        }
+        bool checkIfInCircle(System.Drawing.Point circle, System.Drawing.Point point)
+        {
+            float a = PointPreviewScale / (float)PreviewScale.ScaleX;
+            float x = (float)point.X - (float)circle.X - 1.5f * a/2;
+            float y = (float)point.Y - (float)circle.Y - 1.5f * a/2;
+            return Math.Pow(x, 2) + Math.Pow(y, 2) <= Math.Pow(1.5f * a/2, 2);
         }
 
         private void characters_listbox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

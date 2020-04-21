@@ -13,6 +13,7 @@ namespace TextWriter
         public Bitmap Img;
         public Point Begin;
         public Point End;
+        public Point bitmapLoc;
 
         public const String ImgFormat = ".png";
         public const String PointFromat = ".txt";

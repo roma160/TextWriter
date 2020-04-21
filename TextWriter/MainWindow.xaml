@@ -51,6 +51,7 @@
                 <Button x:Name="add_variant_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add variant" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF464646"
                         Grid.Row="2"/>
                 <GridSplitter Grid.Row="3" Height="5" HorizontalAlignment="Stretch"/>
+                <Image x:Name="SymbolPreview" Grid.Row="4" Width="120" Height="120" VerticalAlignment="Top" Margin="0,10,0,0" Stretch="UniformToFill"/>
             </Grid>
         </ScrollViewer>
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
