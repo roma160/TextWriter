@@ -68,6 +68,7 @@ namespace TextWriter
                 buffBitmap = (Bitmap)bitmap.Clone();
                 onBitmapChanged();
                 graphics = Graphics.FromImage(bitmap);
+                OpenImage.IsEnabled = false;
             }
         }
 
@@ -167,6 +168,15 @@ namespace TextWriter
                     x - sample.bitmapLoc.X, y - sample.bitmapLoc.Y);
                 Characters[selectedCharIndex].Samples[selectedSampleIndex].Begin =
                     beginPoint;
+                showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
+                action = NowAction.WaitingForAction;
+            }
+            else if(action == NowAction.ClearingBack)
+            {
+                System.Drawing.Color pixel = bitmap.GetPixel(x, y);
+                Characters[selectedCharIndex].Samples[selectedSampleIndex].Img =
+                    BitmapFuncs.replaceColor(Characters[selectedCharIndex].Samples[selectedSampleIndex].Img,
+                    pixel, System.Drawing.Color.Transparent, FillStrenght.Value);
                 showControls(Characters[selectedCharIndex].Samples[selectedSampleIndex]);
                 action = NowAction.WaitingForAction;
             }
@@ -300,6 +310,16 @@ namespace TextWriter
                     }
                 }
             }
+        }
+
+        private void RemoveBackButton_Click(object sender, RoutedEventArgs e)
+        {
+            action = NowAction.ClearingBack;
+        }
+
+        private void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

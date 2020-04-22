@@ -30,5 +30,25 @@ namespace TextWriter
                     bitmap.GetHbitmap(), IntPtr.Zero, System.Windows.Int32Rect.Empty,
                     BitmapSizeOptions.FromWidthAndHeight(bitmap.Width, bitmap.Height));
         }
+        public static Bitmap replaceColor(Bitmap source, Color from, Color to, double strength)
+        {
+            for(int x = 0; x < source.Width; x++)
+            {
+                for(int y = 0; y < source.Height; y++)
+                {
+                    Color pixel = source.GetPixel(x, y);
+                    if (ColourDistance(from, pixel) <= strength)
+                        source.SetPixel(x, y, to);
+                }
+            }
+            return source;
+        }
+        public static float ColourDistance(Color a, Color b)
+        {
+            double R = Math.Pow(a.R - b.R, 2);
+            double G = Math.Pow(a.G - b.G, 2);
+            double B = Math.Pow(a.B - b.B, 2);
+            return (float)Math.Sqrt(R + G + B) * 100f / (255f * (float)Math.Sqrt(3));
+        }
     }
 }

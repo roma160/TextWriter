@@ -16,7 +16,7 @@
         <ToolBarPanel Height="30" VerticalAlignment="Top" Panel.ZIndex="100" Orientation="Horizontal" Grid.ColumnSpan="3">
             <Button x:Name="OpenImage" Content="Open image" HorizontalAlignment="Left" Width="160" Height="30" Click="Button_Click"/>
             <Separator Width="5"/>
-            <Button x:Name="StartButton" Content="Start" Width="115"/>
+            <Button x:Name="StartButton" Content="Start" Width="115" Click="StartButton_Click"/>
             <Separator Width="5"/>
             <Button x:Name="SaveCharactersButton" Content="Save characters" Width="115" Click="SaveCharactersButton_Click"/>
             <Separator Width="5"/>
@@ -37,21 +37,24 @@
                     <RowDefinition Height="5"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <Label Content="Characters :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
+                <Label Content="Characters :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch"  FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
                        Grid.Row="0"/>
                 <ListBox x:Name="characters_listbox" Margin="10,44,10,50" Grid.Row="0" SelectionChanged="characters_listbox_SelectionChanged"/>
-                <Button x:Name="add_character_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add character" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF464646"
+                <Button x:Name="add_character_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add character"  FontWeight="Bold" Foreground="#FF464646"
                         Grid.Row="0" Click="add_character_button_Click"/>
                 <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch"/>
-                <Label x:Name="CharacterPreview" Content="Variants :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF0A0A0A" FontSize="20"
+                <Label x:Name="CharacterPreview" Content="Variants :" VerticalAlignment="Top" Margin="10,10,10,0" HorizontalContentAlignment="Stretch"  FontWeight="Bold" Foreground="#FF0A0A0A" FontSize="20"
                        Grid.Row="2" HorizontalAlignment="Center"/>
-                <Label Content="Variants :" VerticalAlignment="Top" Margin="10,37,10,0" HorizontalContentAlignment="Stretch" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
+                <Label Content="Variants :" VerticalAlignment="Top" Margin="10,37,10,0" HorizontalContentAlignment="Stretch"  FontWeight="Bold" Foreground="#FF6C6C6C" FontSize="20"
                        Grid.Row="2"/>
                 <ListBox x:Name="variants_listbox" Margin="10,74,10,50" Grid.Row="2" SelectionChanged="variants_listbox_SelectionChanged"/>
-                <Button x:Name="add_variant_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add variant" FontFamily="Calibri" FontWeight="Bold" Foreground="#FF464646"
+                <Button x:Name="add_variant_button" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="140" Height="30" Margin="10,0,0,10" Content="Add variant"  FontWeight="Bold" Foreground="#FF464646"
                         Grid.Row="2"/>
                 <GridSplitter Grid.Row="3" Height="5" HorizontalAlignment="Stretch"/>
                 <Image x:Name="SymbolPreview" Grid.Row="4" Width="120" Height="120" VerticalAlignment="Top" Margin="0,10,0,0" Stretch="Fill"/>
+                <Slider x:Name="FillStrenght" Grid.Row="4" Margin="10,130,10,0" VerticalAlignment="Top" Maximum="100"/>
+                <Button x:Name="RemoveBackButton" Grid.Row="4" VerticalAlignment="Top" Height="33" Margin="10,153,0,0" HorizontalAlignment="Left" Width="133"  FontWeight="Bold" Foreground="#FF464646" Content="Remove back" Click="RemoveBackButton_Click"/>
+                <Button x:Name="ChangeBack" Grid.Row="4" VerticalAlignment="Top" Height="33" Margin="10,191,0,0" HorizontalAlignment="Left" Width="133"  FontWeight="Bold" Foreground="#FF464646" Content="Change back" />
             </Grid>
         </ScrollViewer>
         <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
