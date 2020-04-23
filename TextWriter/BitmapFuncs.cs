@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Markup;
 using System.Windows.Media.Imaging;
 
 namespace TextWriter
@@ -49,6 +51,13 @@ namespace TextWriter
             double G = Math.Pow(a.G - b.G, 2);
             double B = Math.Pow(a.B - b.B, 2);
             return (float)Math.Sqrt(R + G + B) * 100f / (255f * (float)Math.Sqrt(3));
+        }
+        public static T CloneXaml<T>(T source)
+        {
+            string xaml = XamlWriter.Save(source);
+            StringReader sr = new StringReader(xaml);
+            System.Xml.XmlReader xr = System.Xml.XmlReader.Create(sr);
+            return (T)XamlReader.Load(xr);
         }
     }
 }

@@ -19,9 +19,6 @@ namespace TextWriter
 {
     public partial class MainWindow : Window
     {
-        Bitmap bitmap;
-        Bitmap buffBitmap;
-        Graphics graphics;
         OpenFileDialog open = new OpenFileDialog();
         double scaleFactor = 300.0;
         enum NowAction
@@ -37,10 +34,14 @@ namespace TextWriter
 
         const String NeededChars = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ.-!?:,«»";
         const String Words = "абвгґдеєжзиіїйклмнопрстуфхцчшщьюяАБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЬЮЯ";
+        const String cachedPreviewName = "Cache/preview_cache.png";
+        const String cacheFolderName = "Cache";
         List<Character> Characters;
         int selectedSampleIndex = -1;
         int selectedCharIndex = -1;
+        bool isImageOpened = false;
         NowAction action = NowAction.WaitingForAction;
+        System.Drawing.Size previewSize = new System.Drawing.Size(0, 0);
 
         public MainWindow()
         {
@@ -53,9 +54,9 @@ namespace TextWriter
                 return Characters.Count;
             else return -1;
         }
-        void onBitmapChanged()
+        void onBitmapChanged(Bitmap newBitmap)
         {
-            Preview.Source = BitmapFuncs.fromBitmap(bitmap);
+            Preview.Source = BitmapFuncs.fromBitmap(newBitmap);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -64,11 +65,14 @@ namespace TextWriter
             open.Filter = "Image files|*.bmp;*.jpg;*.gif;*.png;*.tif";
             if(open.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             {
-                bitmap = (Bitmap)Image.FromFile(open.FileName);
-                buffBitmap = (Bitmap)bitmap.Clone();
-                onBitmapChanged();
-                graphics = Graphics.FromImage(bitmap);
+                Bitmap bitmap = (Bitmap)Image.FromFile(open.FileName);
+                Directory.CreateDirectory(cacheFolderName);
+                bitmap.Save(cachedPreviewName, System.Drawing.Imaging.ImageFormat.Png);
+                previewSize = bitmap.Size;
+                onBitmapChanged(bitmap);
                 OpenImage.IsEnabled = false;
+                isImageOpened = true;
+                bitmap.Dispose();
             }
         }
 
@@ -93,10 +97,37 @@ namespace TextWriter
         System.Windows.Point convertToPixels(System.Windows.Point p)
         {
             System.Windows.Point ret = p;
-            ret.X *= bitmap.Width;
+            ret.X *= previewSize.Width;
             ret.X /= Preview.ActualWidth;
-            ret.Y *= bitmap.Height;
+            ret.Y *= previewSize.Height;
             ret.Y /= Preview.ActualHeight;
+            return ret;
+        }
+        System.Drawing.Point convertToPixelsD(System.Windows.Point p)
+        {
+            System.Windows.Point buff = convertToPixels(p);
+            return new System.Drawing.Point((int)buff.X, (int)buff.Y);
+        }
+        System.Windows.Point convertFromPixels(System.Windows.Point p)
+        {
+            System.Windows.Point ret = p;
+            ret.X *= Preview.ActualWidth;
+            ret.X /= previewSize.Width;
+            ret.Y *= Preview.ActualWidth;
+            ret.Y /= previewSize.Width;
+            return ret;
+        }
+        System.Windows.Point wpoint(float x, float y)
+        {
+            return new System.Windows.Point(x, y);
+        }
+        Line createLine(float x1, float y1, float x2, float y2)
+        {
+            Line ret = new Line();
+            ret.X1 = x1;
+            ret.X2 = x2;
+            ret.Y1 = y1;
+            ret.Y2 = y2;
             return ret;
         }
 
@@ -129,6 +160,7 @@ namespace TextWriter
             }
             else if(action == NowAction.SettingStartPoint)
             {
+                Bitmap buffBitmap = (Bitmap)Image.FromFile(cachedPreviewName);
                 int X = Math.Min(x, finishPoint.X);
                 int Y = Math.Min(y, finishPoint.Y);
                 int W = Math.Abs(finishPoint.X - x);
@@ -142,6 +174,7 @@ namespace TextWriter
             }
             else if (action == NowAction.SettingFinishPoint)
             {
+                Bitmap buffBitmap = (Bitmap)Image.FromFile(cachedPreviewName);
                 int X = Math.Min(x, startPoint.X);
                 int Y = Math.Min(y, startPoint.Y);
                 int W = Math.Abs(startPoint.X - x);
@@ -173,6 +206,7 @@ namespace TextWriter
             }
             else if(action == NowAction.ClearingBack)
             {
+                Bitmap bitmap = (Bitmap)Image.FromFile(cachedPreviewName);
                 System.Drawing.Color pixel = bitmap.GetPixel(x, y);
                 Characters[selectedCharIndex].Samples[selectedSampleIndex].Img =
                     BitmapFuncs.replaceColor(Characters[selectedCharIndex].Samples[selectedSampleIndex].Img,
@@ -186,19 +220,23 @@ namespace TextWriter
         {
             int res = checkIfAllCharactersAdded();
             if (res == -1) System.Windows.MessageBox.Show("You have added all characters");
-            else if (buffBitmap != null)
+            else if (isImageOpened)
             {
+                Bitmap buffBitmap = (Bitmap)Image.FromFile(cachedPreviewName);
                 Character newC = new Character(NeededChars[res]);
 
-                System.Drawing.Point startPoint = new System.Drawing.Point(0, 0);
-                System.Drawing.Point finishPoint = new System.Drawing.Point(100, 100);
+                System.Drawing.Point screenStart = convertToPixelsD(new System.Windows.Point(
+                    Scroller.HorizontalOffset, Scroller.VerticalOffset));
+                System.Drawing.Point startPoint = screenStart;
+                System.Drawing.Point finishPoint = new System.Drawing.Point(screenStart.X + 100, screenStart.Y + 100);
                 System.Drawing.Point beginPoint = new System.Drawing.Point(25, 25);
                 System.Drawing.Point endPoint = new System.Drawing.Point(50, 50);
                 newC.AddSample(new CharacterSample(BitmapFuncs.cropBitmap(buffBitmap, startPoint, finishPoint),
                     beginPoint, endPoint));
-                newC.Samples[0].bitmapLoc = new System.Drawing.Point(0, 0);
+                newC.Samples[0].bitmapLoc = startPoint;
                 Characters.Add(newC);
                 updateLists();
+                buffBitmap.Dispose();
             }
             else
                 System.Windows.MessageBox.Show("Firstly open image.", "Error", 
@@ -239,32 +277,59 @@ namespace TextWriter
             System.Drawing.Point endPoint = new System.Drawing.Point(
                 sample.End.X + sample.bitmapLoc.X, sample.End.Y + sample.bitmapLoc.Y);
 
-            bitmap = (Bitmap)buffBitmap.Clone();
-            graphics = Graphics.FromImage(bitmap);
-            drawPointControl(startPoint, System.Drawing.Color.Black);
-            drawPointControl(finishPoint, System.Drawing.Color.Black);
-            drawPointControl(beginPoint, System.Drawing.Color.Green);
-            drawPointControl(endPoint, System.Drawing.Color.Red);
-            System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.Black, 
+            ControlsCanvas.Children.Clear();
+            /*bitmap = (Bitmap)buffBitmap.Clone();
+            graphics = Graphics.FromImage(bitmap);*/
+            drawPointControl(startPoint, Colors.Black);
+            drawPointControl(finishPoint, Colors.Black);
+            drawPointControl(beginPoint, Colors.Green);
+            drawPointControl(endPoint, Colors.Red);
+            SolidColorBrush brush = new SolidColorBrush(Colors.Black);
+            Line firstLine = createLine(startPoint.X, finishPoint.Y, finishPoint.X, finishPoint.Y);
+            Line secondLine = createLine(finishPoint.X, finishPoint.Y, finishPoint.X, startPoint.Y);
+            Line thirdLine = createLine(finishPoint.X, startPoint.Y, startPoint.X, startPoint.Y);
+            Line fourthLine = createLine(startPoint.X, startPoint.Y, startPoint.X, finishPoint.Y);
+            firstLine.Stroke = secondLine.Stroke = thirdLine.Stroke = fourthLine.Stroke = brush;
+            ControlsCanvas.Children.Add(firstLine);
+            ControlsCanvas.Children.Add(secondLine);
+            ControlsCanvas.Children.Add(thirdLine);
+            ControlsCanvas.Children.Add(fourthLine);
+            /*System.Drawing.Pen pen = new System.Drawing.Pen(System.Drawing.Color.Black, 
                 1f / (float)PreviewScale.ScaleX);
             graphics.DrawLine(pen, startPoint.X, finishPoint.Y, finishPoint.X, finishPoint.Y);
             graphics.DrawLine(pen, finishPoint.X, finishPoint.Y, finishPoint.X, startPoint.Y);
             graphics.DrawLine(pen, finishPoint.X, startPoint.Y, startPoint.X, startPoint.Y);
             graphics.DrawLine(pen, startPoint.X, startPoint.Y, startPoint.X, finishPoint.Y);
-            onBitmapChanged();
+            onBitmapChanged();*/
 
             SymbolPreview.Source = BitmapFuncs.fromBitmap(sample.Img); 
         }
-        void drawPointControl(System.Drawing.Point point, System.Drawing.Color color)
+        void drawPointControl(System.Drawing.Point point, System.Windows.Media.Color color)
         {
             float a = PointPreviewScale / (float)PreviewScale.ScaleX;
             float x = point.X;
             float y = point.Y;
-            System.Drawing.Pen pen = new System.Drawing.Pen(color, a/10f);
+            /*System.Drawing.Pen pen = new System.Drawing.Pen(color, a/10f);
             System.Drawing.Brush brush = new SolidBrush(color);
             graphics.DrawLine(pen, x - a, y, x + a, y);
             graphics.DrawLine(pen, x, y - a, x, y + a);
-            graphics.FillEllipse(brush, x, y, 1.5f * a, 1.5f * a);
+            graphics.FillEllipse(brush, x, y, 1.5f * a, 1.5f * a);*/
+            SolidColorBrush brush = new SolidColorBrush(color);
+            Line firstLine = createLine(x - a, y, x + a, y);
+            firstLine.StrokeThickness = a / 10f;
+            firstLine.Stroke = brush;
+            Line secondLine = createLine(x, y - a, x, y + a);
+            secondLine.StrokeThickness = a / 10f;
+            secondLine.Stroke = brush;
+            Ellipse ellipse = new Ellipse();
+            ellipse.Width = 1.5f * a;
+            ellipse.Height = 1.5f * a;
+            ellipse.Margin = new Thickness(x, y, 0, 0);
+            ellipse.Fill = brush;
+            ellipse.MouseDown += Preview_MouseDown;
+            ControlsCanvas.Children.Add(firstLine);
+            ControlsCanvas.Children.Add(secondLine);
+            ControlsCanvas.Children.Add(ellipse);
         }
         bool checkIfInCircle(System.Drawing.Point circle, System.Drawing.Point point)
         {
@@ -297,7 +362,7 @@ namespace TextWriter
                         System.Windows.MessageBox.Show("Select empty folder!!!");
                     else
                     {
-                        buffBitmap.Save(dialog.SelectedPath + "\\preview.png",
+                        Image.FromFile(cachedPreviewName).Save(dialog.SelectedPath + "\\preview.png",
                             System.Drawing.Imaging.ImageFormat.Png);
                         StreamWriter writer = new StreamWriter(dialog.SelectedPath + "\\chars.txt");
                         foreach (Character character in Characters)
@@ -320,6 +385,29 @@ namespace TextWriter
         private void StartButton_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void ShowCharacter_Click(object sender, RoutedEventArgs e)
+        {
+            CharacterSample sample = Characters[selectedCharIndex].Samples[selectedSampleIndex];
+            Scroller.ScrollToHorizontalOffset(sample.bitmapLoc.X);
+            Scroller.ScrollToVerticalOffset(sample.bitmapLoc.Y);
+        }
+
+        private void add_variant_button_Click(object sender, RoutedEventArgs e)
+        {
+            Bitmap buffBitmap = (Bitmap)Image.FromFile(cachedPreviewName);
+            System.Drawing.Point screenStart = convertToPixelsD(new System.Windows.Point(
+                    Scroller.HorizontalOffset, Scroller.VerticalOffset));
+            System.Drawing.Point startPoint = screenStart;
+            System.Drawing.Point finishPoint = new System.Drawing.Point(screenStart.X + 100, screenStart.Y + 100);
+            System.Drawing.Point beginPoint = new System.Drawing.Point(25, 25);
+            System.Drawing.Point endPoint = new System.Drawing.Point(50, 50);
+            Characters[selectedCharIndex].AddSample(new CharacterSample(BitmapFuncs.cropBitmap(buffBitmap, startPoint, finishPoint),
+                    beginPoint, endPoint));
+            Characters[selectedCharIndex].Samples.Last().bitmapLoc = startPoint;
+            updateLists();
+            buffBitmap.Dispose();
         }
     }
 }
